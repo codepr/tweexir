@@ -3,17 +3,18 @@ defmodule Tweexir.Api do
   alias Tweexir.Client
   alias Tweexir.Stream
 
-  @doc"""
+  @doc """
+  """
+  def tweets_count(query) do
+    do_get("/tweets/counts/all" <> URI.encode_query(query))
+  end
+
+  @doc """
   Returns the numerical count of Tweets for a query over the last seven days.
   """
   def recent_tweets_count(query) do
-    ("/tweets/counts/recent?" <> URI.encode_query(query))
-    |> Client.get()
-    |> case do
-      {:ok, %HTTPoison.Response{body: body}} -> Poison.decode(body)
-      {:error, %HTTPoison.Error{reason: reason}} -> {:error, reason}
-    end
-  end
+   do_get ("/tweets/counts/recent?" <> URI.encode_query(query))
+      end
 
   def stream(rules) do
     rules_url = "/tweets/search/stream/rules"
@@ -66,6 +67,15 @@ defmodule Tweexir.Api do
 
       {:error, %HTTPoison.Error{reason: reason}} ->
         {:error, reason}
+    end
+  end
+
+  defp do_get(url) do
+    url
+    |> Client.get()
+    |> case do
+      {:ok, %HTTPoison.Response{body: body}} -> Poison.decode(body)
+      {:error, %HTTPoison.Error{reason: reason}} -> {:error, reason}
     end
   end
 end
