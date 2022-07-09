@@ -13,4 +13,15 @@ defmodule Tweexir.ClientTest do
       assert Client.process_request_url("foo/bar") == "https://api.twitter.com/2/foo/bar"
     end
   end
+
+  describe "process_request_headers/1" do
+    test "update headers with the authentication token" do
+      assert(
+        Client.process_request_headers([:ContentType, "application/json"]) == [
+          {:Authorization, "Bearer test-token"},
+          :ContentType, "application/json"
+        ]
+      )
+    end
+  end
 end
