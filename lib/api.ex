@@ -4,6 +4,15 @@ defmodule Tweexir.Api do
   alias Tweexir.Stream
 
   @doc """
+  Returns the public Tweets posted during the last week filtered by a query.
+  """
+  def recent_search(query) do
+    do_get("/tweets/search" <> URI.encode_query(query))
+  end
+
+  @doc """
+  Returns the numerical count of Tweets for a query for the entire archive of the
+  public Tweets.
   """
   def tweets_count(query) do
     do_get("/tweets/counts/all" <> URI.encode_query(query))
@@ -13,8 +22,8 @@ defmodule Tweexir.Api do
   Returns the numerical count of Tweets for a query over the last seven days.
   """
   def recent_tweets_count(query) do
-   do_get ("/tweets/counts/recent?" <> URI.encode_query(query))
-      end
+    do_get("/tweets/counts/recent?" <> URI.encode_query(query))
+  end
 
   def stream(rules) do
     rules_url = "/tweets/search/stream/rules"
