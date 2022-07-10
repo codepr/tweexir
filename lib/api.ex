@@ -25,6 +25,26 @@ defmodule Tweexir.Api do
     do_get("/tweets/counts/recent?" <> URI.encode_query(query))
   end
 
+  @doc """
+  Connects to a stream which delivers a roughly 1% random sample of publicly available
+  Tweets in real-time.
+  """
+  def sample_stream do
+    {:ok, stage} = Stream.start_link()
+
+    case Client.get("/tweets/sample/stream", [], recv_timeout: :infinity, stream_to: stage) do
+      {:ok, %HTTPoison.AsyncResponse{}} ->
+        Logger.info("Start streaming")
+        {:ok, GenStage.stream([{stage, [min_demand: 500, max_demand: 1000]}])}
+
+      {:error, %HTTPoison.Error{reason: reason}} ->
+        {:error, reason}
+    end
+  end
+
+  @doc """
+  Allows to filter the real-time stream of public Tweets by a query.
+  """
   def stream(rules) do
     rules_url = "/tweets/search/stream/rules"
 
@@ -33,7 +53,7 @@ defmodule Tweexir.Api do
          {:ok, _} <- delete_stream_rules(rules_url, prev_rules),
          {:ok, _} <-
            set_stream_rules(rules_url, rules_payload) do
-      {:ok, stage} = Stream.start_link("/tweets/search/stream")
+      {:ok, stage} = Stream.start_link()
 
       case Client.get("/tweets/search/stream", [], recv_timeout: :infinity, stream_to: stage) do
         {:ok, %HTTPoison.AsyncResponse{}} ->

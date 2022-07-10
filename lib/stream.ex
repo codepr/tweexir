@@ -6,8 +6,8 @@ defmodule Tweexir.Stream do
   Starts a stage as part of a supervision tree.
   """
   @spec start_link(Keyword.t()) :: GenServer.on_start()
-  def start_link(url, options \\ []) do
-    GenStage.start_link(__MODULE__, [url], options)
+  def start_link(options \\ []) do
+    GenStage.start_link(__MODULE__, [], options)
   end
 
   #
@@ -15,8 +15,7 @@ defmodule Tweexir.Stream do
   #
 
   @doc false
-  def init([url]) do
-    Client.get(url, [], recv_timeout: :infinity, stream_to: self())
+  def init([]) do
     {:producer, %{chunk: nil, demand: 0}}
   end
 
