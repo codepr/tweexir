@@ -4,10 +4,18 @@ defmodule Tweexir.Api do
   alias Tweexir.Stream
 
   @doc """
+  Returns the Tweets mentioning a specific Twitter user, including query to filter
+  results
+  """
+  def user_mentions(user_id, query) do
+    do_get("/users/#{user_id}/mentions?" <> URI.encode_query(query))
+  end
+
+  @doc """
   Returns the Tweets published by a specific Twitter account, including
   query to filter results.
   """
-  def home_timeline(user_id, query) do
+  def user_timeline(user_id, query) do
     do_get("/users/#{user_id}/tweets?" <> URI.encode_query(query))
   end
 

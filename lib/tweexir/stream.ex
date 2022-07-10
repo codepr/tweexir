@@ -31,7 +31,7 @@ defmodule Tweexir.Stream do
 
   def handle_info(%HTTPoison.AsyncChunk{} = chunk, state) do
     case Poison.decode(chunk.chunk) do
-      {:ok, tweets} -> {:noreply, [tweets], state}
+      {:ok, tweets} -> {:noreply, [tweets["data"]], state}
       {:error, error} -> {:noreply, [error], state}
     end
   end
