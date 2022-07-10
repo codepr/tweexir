@@ -75,12 +75,7 @@ defmodule Tweexir.Api do
   end
 
   defp get_stream_rules(url) do
-    url
-    |> Client.get()
-    |> case do
-      {:ok, %HTTPoison.Response{status_code: 200, body: body}} -> Poison.decode(body)
-      {:error, %HTTPoison.Error{reason: reason}} -> {:error, reason}
-    end
+    do_get(url)
   end
 
   defp delete_stream_rules(url, rules) do
@@ -111,8 +106,15 @@ defmodule Tweexir.Api do
     url
     |> Client.get()
     |> case do
-      {:ok, %HTTPoison.Response{body: body}} -> Poison.decode(body)
-      {:error, %HTTPoison.Error{reason: reason}} -> {:error, reason}
+      {:ok, %HTTPoison.Response{status_code: status_code, body: body}}
+      when status_code in 200..299 ->
+        Poison.decode(body)
+
+      {:ok, %HTTPoison.Response{body: body}} ->
+        {:error, Poison.decode!(body)}
+
+      {:error, %HTTPoison.Error{reason: reason}} ->
+        {:error, reason}
     end
   end
 end
