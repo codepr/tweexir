@@ -4,10 +4,18 @@ defmodule Tweexir.Api do
   alias Tweexir.Stream
 
   @doc """
+  Returns the Tweets published by a specific Twitter account, including
+  query to filter results.
+  """
+  def home_timeline(user_id, query) do
+    do_get("/users/#{user_id}/tweets?" <> URI.encode_query(query))
+  end
+
+  @doc """
   Returns the public Tweets posted during the last week filtered by a query.
   """
   def recent_search(query) do
-    do_get("/tweets/search" <> URI.encode_query(query))
+    do_get("/tweets/search?" <> URI.encode_query(query))
   end
 
   @doc """
@@ -15,7 +23,7 @@ defmodule Tweexir.Api do
   public Tweets.
   """
   def tweets_count(query) do
-    do_get("/tweets/counts/all" <> URI.encode_query(query))
+    do_get("/tweets/counts/all?" <> URI.encode_query(query))
   end
 
   @doc """
