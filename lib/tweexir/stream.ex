@@ -1,57 +1,50 @@
 defmodule Tweexir.Stream do
-  use GenStage
   alias Tweexir.Client
 
-  @doc """
-  Starts a stage as part of a supervision tree.
-  """
-  @spec start_link(Keyword.t()) :: GenServer.on_start()
-  def start_link(options \\ []) do
-    GenStage.start_link(__MODULE__, [], options)
+  @default_timeout 60_000
+
+  def stream(url) do
+    Stream.resource(
+      fn -> source(url) end,
+      &next_chunk/1,
+      &sink/1
+    )
   end
 
-  #
-  # Callbacks
-  #
-
-  @doc false
-  def init([]) do
-    {:producer, %{chunk: nil, demand: 0}}
+  defp source(url) do
+    Client.get(url, [], recv_timeout: :infinity, stream_to: self())
   end
 
-  @doc false
-  def handle_demand(demand, state) do
-    {:noreply, [], %{state | demand: state.demand + demand}}
+  defp next_chunk({:ok, %HTTPoison.AsyncResponse{} = response}) do
+    next_chunk(response)
   end
 
-  def handle_info(%HTTPoison.AsyncResponse{} = chunk, state) do
-    if state.demand > 0, do: Client.stream_next(chunk)
-    {:noreply, [], state}
-  end
+  defp next_chunk(%HTTPoison.AsyncResponse{id: id} = response) do
+    receive do
+      %HTTPoison.AsyncChunk{id: ^id, chunk: chunk} ->
+        HTTPoison.stream_next(response)
 
-  def handle_info(%HTTPoison.AsyncChunk{} = chunk, state) do
-    case Poison.decode(chunk.chunk) do
-      {:ok, tweets} -> {:noreply, [tweets["data"]], state}
-      {:error, error} -> {:noreply, [error], state}
+        case Poison.decode(chunk) do
+          {:ok, tweet} -> {[tweet], response}
+          {:error, error} -> {[error], response}
+        end
+
+      %HTTPoison.AsyncEnd{id: ^id} ->
+        {:halt, response}
+
+      _ ->
+        {[], response}
+    after
+      timeout() ->
+        {:halt, response}
     end
   end
 
-  def handle_info(%HTTPoison.AsyncEnd{} = _response, state) do
-    {:stop, "Connection closed", state}
+  defp sink(%HTTPoison.AsyncResponse{id: id}) do
+    :hackney.stop_async(id)
   end
 
-  def handle_info(%HTTPoison.AsyncStatus{code: code}, state) do
-    {:noreply, [code], state}
-  end
-
-  def handle_info(%HTTPoison.AsyncHeaders{headers: headers}, state) do
-    reply =
-      Enum.filter(headers, fn {k, _v} -> k in ["x-rate-limit-limit", "x-rate-limit-remaining"] end)
-
-    {:noreply, [reply], state}
-  end
-
-  def terminate(reason, state) do
-    {:noreply, [reason], state}
+  defp timeout do
+    Application.get_env(:stream, :timeout, @default_timeout)
   end
 end

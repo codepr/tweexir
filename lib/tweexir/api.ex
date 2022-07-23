@@ -2,6 +2,7 @@ defmodule Tweexir.Api do
   require Logger
   alias Tweexir.Client
   alias Tweexir.Stream
+  alias Tweexir.StreamProducer
 
   @doc """
   Returns the Tweets mentioning a specific Twitter user, including query to filter
@@ -45,23 +46,30 @@ defmodule Tweexir.Api do
   Connects to a stream which delivers a roughly 1% random sample of publicly available
   Tweets in real-time.
   """
-  def sample_stream do
-    {:ok, stage} = Stream.start_link()
-
-    case Client.get("/tweets/sample/stream", [], recv_timeout: :infinity, stream_to: stage) do
-      {:ok, %HTTPoison.AsyncResponse{}} ->
-        Logger.info("Start streaming")
-        {:ok, GenStage.stream([{stage, [min_demand: 500, max_demand: 1000]}])}
-
-      {:error, %HTTPoison.Error{reason: reason}} ->
-        {:error, reason}
+  def sample_stream(stream) do
+    if stream == :producer do
+      {:ok, stage} = StreamProducer.start_link("/tweets/sample/stream")
+      {:ok, GenStage.stream([{stage, [min_demand: 50, max_demand: 500]}])}
+    else
+      {:ok, Stream.stream("/tweets/sample/stream")}
     end
+
+    # {:ok, stage} = Stream.start_link()
+
+    # case Client.get("/tweets/sample/stream", [], recv_timeout: :infinity, stream_to: stage) do
+    #  {:ok, %HTTPoison.AsyncResponse{}} ->
+    #    Logger.info("Start streaming")
+    #    {:ok, GenStage.stream([{stage, [min_demand: 500, max_demand: 1000]}])}
+
+    #  {:error, %HTTPoison.Error{reason: reason}} ->
+    #    {:error, reason}
+    # end
   end
 
   @doc """
   Allows to filter the real-time stream of public Tweets by a query.
   """
-  def stream(rules) do
+  def stream(stream, rules) do
     rules_url = "/tweets/search/stream/rules"
 
     with {:ok, rules_payload} <- Poison.encode(%{"add" => rules}),
@@ -69,16 +77,23 @@ defmodule Tweexir.Api do
          {:ok, _} <- delete_stream_rules(rules_url, prev_rules),
          {:ok, _} <-
            set_stream_rules(rules_url, rules_payload) do
-      {:ok, stage} = Stream.start_link()
-
-      case Client.get("/tweets/search/stream", [], recv_timeout: :infinity, stream_to: stage) do
-        {:ok, %HTTPoison.AsyncResponse{}} ->
-          Logger.info("Start streaming")
-          {:ok, GenStage.stream([{stage, [min_demand: 500, max_demand: 1000]}])}
-
-        {:error, %HTTPoison.Error{reason: reason}} ->
-          {:error, reason}
+      if stream == :producer do
+        {:ok, stage} = StreamProducer.start_link("/tweets/search/stream")
+        {:ok, GenStage.stream([{stage, [min_demand: 500, max_demand: 1000]}])}
+      else
+        {:ok, Stream.stream("/tweets/search/stream")}
       end
+
+      # {:ok, stage} = Stream.start_link()
+
+      # case Client.get("/tweets/search/stream", [], recv_timeout: :infinity, stream_to: stage) do
+      #  {:ok, %HTTPoison.AsyncResponse{}} ->
+      #    Logger.info("Start streaming")
+      #    {:ok, GenStage.stream([{stage, [min_demand: 500, max_demand: 1000]}])}
+
+      #  {:error, %HTTPoison.Error{reason: reason}} ->
+      #    {:error, reason}
+      # end
     end
   end
 

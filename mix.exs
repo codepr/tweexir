@@ -21,6 +21,7 @@ defmodule Tweexir.MixProject do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
+      {:credo, "~> 1.4", runtime: false},
       {:httpoison, "~> 1.8"},
       {:poison, "~> 5.0"},
       {:jason, "~> 1.1"},
