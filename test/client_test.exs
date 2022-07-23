@@ -19,7 +19,8 @@ defmodule Tweexir.ClientTest do
       assert(
         Client.process_request_headers([:ContentType, "application/json"]) == [
           {:Authorization, "Bearer test-token"},
-          :ContentType, "application/json"
+          :ContentType,
+          "application/json"
         ]
       )
     end

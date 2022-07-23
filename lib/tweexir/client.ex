@@ -1,11 +1,12 @@
 defmodule Tweexir.Client do
+  @moduledoc false
   use HTTPoison.Base
 
   def process_request_url(url) do
-    unless URI.parse(url).scheme do
-      api_url() <> "/#{api_version()}" <> if String.first(url) == "/", do: url, else: "/" <> url
-    else
+    if has_scheme?(url) do
       url
+    else
+      api_url() <> "/#{api_version()}" <> if String.first(url) == "/", do: url, else: "/" <> url
     end
   end
 
@@ -16,6 +17,8 @@ defmodule Tweexir.Client do
       "Bearer #{bearer_token()}"
     )
   end
+
+  defp has_scheme?(url), do: URI.parse(url).scheme != nil
 
   defp api_url, do: "https://api.twitter.com"
 

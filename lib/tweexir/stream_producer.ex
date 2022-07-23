@@ -1,4 +1,5 @@
 defmodule Tweexir.StreamProducer do
+  @moduledoc false
   use GenStage
   alias Tweexir.Stream, as: TweetStream
 
@@ -32,5 +33,4 @@ defmodule Tweexir.StreamProducer do
       {:error, error} -> {:noreply, [error], stream}
     end
   end
-
 end

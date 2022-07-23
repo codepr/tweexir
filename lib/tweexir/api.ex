@@ -1,4 +1,5 @@
 defmodule Tweexir.Api do
+  @moduledoc false
   require Logger
   alias Tweexir.Client
   alias Tweexir.Stream

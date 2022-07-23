@@ -1,4 +1,5 @@
 defmodule Tweexir.Stream do
+  @moduledoc false
   alias Tweexir.Client
 
   @default_timeout 60_000
