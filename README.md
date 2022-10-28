@@ -1,8 +1,8 @@
 # Tweexir
 
-Twitter client library for v2 APIs. WIP.
+Twitter client library for v2 APIs.
 
-## Quickstart
+## Quickstart
 
 Requires a `Bearer token` in the `config/config.exs` to work.
 
