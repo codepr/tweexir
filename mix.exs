@@ -23,7 +23,6 @@ defmodule Tweexir.MixProject do
     [
       {:credo, "~> 1.4", runtime: false},
       {:httpoison, "~> 1.8"},
-      {:poison, "~> 5.0"},
       {:jason, "~> 1.1"},
       {:gen_stage, "~> 1.1.2"}
     ]

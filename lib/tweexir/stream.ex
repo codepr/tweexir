@@ -1,8 +1,38 @@
 defmodule Tweexir.Stream do
   @moduledoc false
-  alias Tweexir.Client
+  alias Tweexir.Http.Client
 
   @default_timeout 60_000
+
+  def get_rules(url) do
+    url
+    |> Client.get()
+    |> from_json()
+  end
+
+  def set_rules(url, rules) do
+    url
+    |> Client.post(rules, [{"Content-Type", "application/json"}])
+    |> from_json()
+  end
+
+  def delete_rules(url, rules) do
+    with {:ok, payload} <-
+           Jason.encode(%{"delete" => %{"ids" => Enum.map(rules["data"], fn r -> r["id"] end)}}) do
+      url
+      |> Client.post(payload, [{"Content-Type", "application/json"}])
+      |> from_json()
+    end
+  end
+
+  def reset_rules(url, rules) do
+    with {:ok, payload} <- Jason.encode(%{"add" => rules}),
+         {:ok, existing_rules} <- get_rules(url),
+         {:ok, _} <- delete_rules(url, existing_rules) do
+      set_rules(url, payload)
+      :ok
+    end
+  end
 
   def stream(url) do
     Stream.resource(
@@ -25,7 +55,7 @@ defmodule Tweexir.Stream do
       %HTTPoison.AsyncChunk{id: ^id, chunk: chunk} ->
         HTTPoison.stream_next(response)
 
-        case Poison.decode(chunk) do
+        case Jason.decode(chunk) do
           {:ok, tweet} -> {[tweet], response}
           {:error, error} -> {[error], response}
         end
@@ -48,4 +78,7 @@ defmodule Tweexir.Stream do
   defp timeout do
     Application.get_env(:stream, :timeout, @default_timeout)
   end
+
+  defp from_json({:ok, io_data}), do: Jason.decode!(io_data)
+  defp from_json(response_error), do: response_error
 end

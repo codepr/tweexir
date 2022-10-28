@@ -1,4 +1,4 @@
 import Config, only: [config: 2]
 
-config :twitter,
+config :tweexir,
   bearer_token: "test-token"

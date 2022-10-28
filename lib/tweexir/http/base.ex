@@ -1,4 +1,4 @@
-defmodule Tweexir.Client do
+defmodule Tweexir.Http.Base do
   @moduledoc false
   use HTTPoison.Base
 
@@ -24,5 +24,5 @@ defmodule Tweexir.Client do
 
   defp api_version, do: 2
 
-  defp bearer_token, do: Application.fetch_env!(:twitter, :bearer_token)
+  defp bearer_token, do: Application.fetch_env!(:tweexir, :bearer_token)
 end
